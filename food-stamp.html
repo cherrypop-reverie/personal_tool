@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食物押字工具</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      background: #f2f2f7;
+      color: #1c1c1e;
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+      padding-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-align: center;
+      padding-top: 8px;
+    }
+
+    /* Upload button */
+    #file-input { display: none; }
+
+    .upload-btn {
+      display: block;
+      width: 100%;
+      padding: 22px;
+      background: #007aff;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      text-align: center;
+      margin-bottom: 20px;
+      letter-spacing: 0.2px;
+    }
+
+    .upload-btn:active { background: #0062cc; }
+
+    /* Section label */
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #8e8e93;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+
+    /* Photo card */
+    .photo-card {
+      background: white;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .photo-thumb {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .card-controls { flex: 1; min-width: 0; }
+
+    .card-controls label {
+      font-size: 12px;
+      color: #8e8e93;
+      font-weight: 500;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .card-controls input[type="date"] {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1.5px solid #e5e5ea;
+      border-radius: 10px;
+      font-size: 15px;
+      margin-bottom: 10px;
+      color: #1c1c1e;
+      background: #f9f9fb;
+    }
+
+    .meal-picker {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .meal-btn {
+      padding: 9px 2px;
+      border: 1.5px solid #e5e5ea;
+      border-radius: 10px;
+      background: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      color: #1c1c1e;
+      transition: all 0.12s;
+    }
+
+    .meal-btn.selected {
+      background: #007aff;
+      border-color: #007aff;
+      color: white;
+      font-weight: 600;
+    }
+
+    .meal-btn:active { opacity: 0.75; }
+
+    /* Bulk apply */
+    .bulk-section {
+      background: white;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .bulk-header {
+      padding: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .bulk-header:active { background: #f2f2f7; }
+
+    .chevron {
+      font-size: 11px;
+      color: #8e8e93;
+      transition: transform 0.2s;
+      display: inline-block;
+    }
+
+    .bulk-header.open .chevron { transform: rotate(180deg); }
+
+    .bulk-body {
+      display: none;
+      padding: 0 16px 16px;
+      border-top: 1px solid #f2f2f7;
+    }
+
+    .bulk-body.open { display: block; }
+
+    .bulk-body label {
+      font-size: 12px;
+      color: #8e8e93;
+      font-weight: 500;
+      display: block;
+      margin-bottom: 5px;
+      margin-top: 12px;
+    }
+
+    .bulk-body input[type="date"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #e5e5ea;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #1c1c1e;
+      background: #f9f9fb;
+    }
+
+    .bulk-meal-picker {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .bulk-apply-btn {
+      width: 100%;
+      padding: 14px;
+      background: #34c759;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .bulk-apply-btn:active { background: #28a745; }
+
+    /* Process button */
+    .process-btn {
+      display: block;
+      width: 100%;
+      padding: 20px;
+      background: #ff9500;
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      margin-bottom: 28px;
+      letter-spacing: 0.2px;
+    }
+
+    .process-btn:disabled {
+      background: #c7c7cc;
+      cursor: not-allowed;
+    }
+
+    .process-btn:not(:disabled):active { background: #e08600; }
+
+    /* Results */
+    .result-item {
+      background: white;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .result-label {
+      font-size: 13px;
+      color: #8e8e93;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .result-item img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .result-actions { display: flex; gap: 8px; }
+
+    .share-btn {
+      flex: 1;
+      padding: 14px;
+      background: #007aff;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .share-btn:active { background: #0062cc; }
+
+    .download-btn {
+      flex: 1;
+      padding: 14px;
+      background: #5ac8fa;
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .download-btn:active { background: #40b0e0; }
+
+    .hidden { display: none !important; }
+
+    .processing-indicator {
+      text-align: center;
+      color: #8e8e93;
+      font-size: 15px;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>食物押字</h1>
+
+  <input type="file" id="file-input" multiple accept="image/*">
+  <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+    選取照片
+  </button>
+
+  <!-- Per-photo settings -->
+  <div id="photos-section" class="hidden">
+    <div class="section-title">照片設定</div>
+    <div id="photo-cards"></div>
+
+    <!-- Bulk apply -->
+    <div class="bulk-section">
+      <div class="bulk-header" id="bulk-toggle" onclick="toggleBulk()">
+        全部套用同一設定
+        <span class="chevron">▼</span>
+      </div>
+      <div class="bulk-body" id="bulk-body">
+        <label>日期</label>
+        <input type="date" id="bulk-date">
+        <label>餐別</label>
+        <div class="bulk-meal-picker" id="bulk-meal-picker">
+          <button class="meal-btn" onclick="selectBulkMeal('早餐', this)">早餐</button>
+          <button class="meal-btn" onclick="selectBulkMeal('午餐', this)">午餐</button>
+          <button class="meal-btn" onclick="selectBulkMeal('晚餐', this)">晚餐</button>
+          <button class="meal-btn" onclick="selectBulkMeal('點心', this)">點心</button>
+        </div>
+        <button class="bulk-apply-btn" onclick="applyBulk()">套用到全部照片</button>
+      </div>
+    </div>
+
+    <button class="process-btn" id="process-btn" onclick="processAll()">
+      開始處理 <span id="photo-count">0</span> 張照片
+    </button>
+  </div>
+
+  <!-- Results -->
+  <div id="results-section" class="hidden">
+    <div class="section-title">處理結果</div>
+    <div id="results"></div>
+  </div>
+
+  <script>
+    let photos = [];
+    let bulkMeal = '';
+
+    function todayValue() {
+      const d = new Date();
+      return [
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, '0'),
+        String(d.getDate()).padStart(2, '0')
+      ].join('-');
+    }
+
+    function formatLabel(dateValue) {
+      const [, m, day] = dateValue.split('-');
+      return `${m}/${day}`;
+    }
+
+    document.getElementById('bulk-date').value = todayValue();
+
+    document.getElementById('file-input').addEventListener('change', function(e) {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      // Revoke old object URLs
+      photos.forEach(p => { if (p.objectUrl) URL.revokeObjectURL(p.objectUrl); });
+
+      photos = files.map(file => ({
+        file,
+        objectUrl: URL.createObjectURL(file),
+        meal: '午餐',
+        resultBlob: null
+      }));
+
+      renderPhotoCards();
+      document.getElementById('photos-section').classList.remove('hidden');
+      document.getElementById('results-section').classList.add('hidden');
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('photo-count').textContent = photos.length;
+
+      // Reset file input so same files can be re-selected
+      this.value = '';
+    });
+
+    function renderPhotoCards() {
+      const container = document.getElementById('photo-cards');
+      container.innerHTML = '';
+
+      photos.forEach((photo, i) => {
+        const card = document.createElement('div');
+        card.className = 'photo-card';
+        card.innerHTML = `
+          <img class="photo-thumb" src="${photo.objectUrl}" alt="照片 ${i + 1}">
+          <div class="card-controls">
+            <label>日期</label>
+            <input type="date" id="date-${i}" value="${todayValue()}">
+            <label>餐別</label>
+            <div class="meal-picker" id="meals-${i}">
+              <button class="meal-btn" data-meal="早餐" onclick="selectMeal(${i}, '早餐', this)">早餐</button>
+              <button class="meal-btn selected" data-meal="午餐" onclick="selectMeal(${i}, '午餐', this)">午餐</button>
+              <button class="meal-btn" data-meal="晚餐" onclick="selectMeal(${i}, '晚餐', this)">晚餐</button>
+              <button class="meal-btn" data-meal="點心" onclick="selectMeal(${i}, '點心', this)">點心</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function selectMeal(idx, meal, btn) {
+      photos[idx].meal = meal;
+      document.querySelectorAll(`#meals-${idx} .meal-btn`).forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    function toggleBulk() {
+      document.getElementById('bulk-toggle').classList.toggle('open');
+      document.getElementById('bulk-body').classList.toggle('open');
+    }
+
+    function selectBulkMeal(meal, btn) {
+      bulkMeal = meal;
+      document.querySelectorAll('#bulk-meal-picker .meal-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    function applyBulk() {
+      const date = document.getElementById('bulk-date').value;
+
+      photos.forEach((photo, i) => {
+        if (date) {
+          document.getElementById(`date-${i}`).value = date;
+        }
+        if (bulkMeal) {
+          photo.meal = bulkMeal;
+          document.querySelectorAll(`#meals-${i} .meal-btn`).forEach(b => {
+            b.classList.toggle('selected', b.dataset.meal === bulkMeal);
+          });
+        }
+      });
+    }
+
+    async function processAll() {
+      const btn = document.getElementById('process-btn');
+      btn.disabled = true;
+      btn.textContent = '處理中…';
+
+      const resultsContainer = document.getElementById('results');
+      resultsContainer.innerHTML = '<div class="processing-indicator">處理中，請稍候…</div>';
+      document.getElementById('results-section').classList.remove('hidden');
+
+      // Let the DOM update before heavy canvas work
+      await new Promise(r => setTimeout(r, 30));
+
+      resultsContainer.innerHTML = '';
+
+      for (let i = 0; i < photos.length; i++) {
+        const photo = photos[i];
+        const dateValue = document.getElementById(`date-${i}`).value || todayValue();
+        const label = `${formatLabel(dateValue)} ${photo.meal}`;
+
+        const blob = await stampImage(photo.file, label);
+        photo.resultBlob = blob;
+        const resultUrl = URL.createObjectURL(blob);
+        photo.resultUrl = resultUrl;
+
+        const item = document.createElement('div');
+        item.className = 'result-item';
+        item.innerHTML = `
+          <div class="result-label">${label}</div>
+          <img src="${resultUrl}" alt="${label}">
+          <div class="result-actions">
+            <button class="share-btn" onclick="shareImage(${i})">分享 / 存入相簿</button>
+            <button class="download-btn" onclick="downloadImage(${i}, '${label}')">下載</button>
+          </div>
+        `;
+        resultsContainer.appendChild(item);
+      }
+
+      btn.disabled = false;
+      btn.textContent = `開始處理 ${photos.length} 張照片`;
+      document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function stampImage(file, label) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+
+          const fontSize = Math.round(img.width * 0.05);
+          ctx.font = `bold ${fontSize}px -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif`;
+          ctx.textBaseline = 'alphabetic';
+
+          const x = img.width * 0.02;
+          const y = img.height * 0.07;
+
+          // Black stroke (outline)
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+          ctx.lineWidth = fontSize * 0.14;
+          ctx.lineJoin = 'round';
+          ctx.strokeText(label, x, y);
+
+          // White fill
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(label, x, y);
+
+          canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.92);
+          URL.revokeObjectURL(img.src);
+        };
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    async function shareImage(idx) {
+      const photo = photos[idx];
+      if (!photo || !photo.resultBlob) return;
+
+      const label = photo.resultUrl ? '' : 'photo';
+      const dateEl = document.getElementById(`date-${idx}`);
+      const dateValue = dateEl ? dateEl.value : todayValue();
+      const filename = `${formatLabel(dateValue)}_${photo.meal}.jpg`;
+
+      const file = new File([photo.resultBlob], filename, { type: 'image/jpeg' });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: filename });
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+          // Fall through to download
+        }
+      }
+
+      // Fallback: trigger download
+      downloadImage(idx, filename.replace('.jpg', ''));
+    }
+
+    function downloadImage(idx, label) {
+      const photo = photos[idx];
+      if (!photo || !photo.resultUrl) return;
+
+      const a = document.createElement('a');
+      a.href = photo.resultUrl;
+      a.download = `${label}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  </script>
+</body>
+</html>
